@@ -308,7 +308,7 @@
       <div class="section-head">
         <div>
           <h2 id="kpi-title">Vendas e receita</h2>
-          <p>Consolidado das 12 abas mensais da planilha de vendas.</p>
+          <p>Receita consolidada de consultoria/assessoria (vendas) + certificado digital, já com os tributos incidentes subtraídos.</p>
         </div>
       </div>
       <div class="kpi-grid" id="kpi-vendas"></div>
@@ -384,6 +384,12 @@
   var SHEET_CLIENTES = "Controle de Clientes";
   var SHEET_SAIDAS = "Saídas / Baixa Escritório.";
   var SHEET_CERTIFICADOS = "Gestão de Vendas";
+
+  // Alíquota nominal do Simples Nacional — Anexo III, 1ª faixa (RBT12 até R$ 180.000,00,
+  // parcela a deduzir R$ 0,00). Confirmada pelo cliente para uso neste painel. Usada como
+  // estimativa para a receita de certificado digital, que não tem coluna própria de base
+  // de cálculo na planilha; a receita de vendas usa o valor já lançado pela equipe.
+  var SIMPLES_NACIONAL_ANEXO_III_FAIXA1 = 0.06;
 
   var MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   var MESES_ABREV = {Janeiro:"Jan",Fevereiro:"Fev",Março:"Mar",Abril:"Abr",Maio:"Mai",Junho:"Jun",Julho:"Jul",Agosto:"Ago",Setembro:"Set",Outubro:"Out",Novembro:"Nov",Dezembro:"Dez"};
@@ -684,19 +690,28 @@
     var saidas = applyFilters(STATE.saidas);
 
     // ── Vendas / receita ──
-    var receitaBruta = vendas.reduce(function(s,v){return s+v.VALOR;},0);
-    var receitaLiquida = vendas.reduce(function(s,v){return s+(isFinite(v.BASE_CALCULO)?v.BASE_CALCULO:v.VALOR);},0);
-    var tributos = Math.max(0, Math.round((receitaBruta-receitaLiquida)*100)/100);
-    var carga = receitaBruta>0 ? (tributos/receitaBruta*100) : 0;
+    var receitaBrutaVendas = vendas.reduce(function(s,v){return s+v.VALOR;},0);
+    var receitaLiquidaVendas = vendas.reduce(function(s,v){return s+(isFinite(v.BASE_CALCULO)?v.BASE_CALCULO:v.VALOR);},0);
+    var tributosVendas = Math.max(0, Math.round((receitaBrutaVendas-receitaLiquidaVendas)*100)/100);
     var comissaoTotal = vendas.reduce(function(s,v){return s+v.COMISSAO;},0);
-    var ticketMedio = vendas.length>0 ? receitaBruta/vendas.length : 0;
+    var ticketMedio = vendas.length>0 ? receitaBrutaVendas/vendas.length : 0;
+
+    // Receita de certificado digital não tem coluna própria de tributo na planilha —
+    // aplica a mesma alíquota nominal (6%, 1ª faixa do Simples Nacional) como estimativa.
+    var certReceita = certificados.reduce(function(s,c){return s+c.VALOR;},0);
+    var tributosCertEstimado = Math.round(certReceita * SIMPLES_NACIONAL_ANEXO_III_FAIXA1 * 100) / 100;
+
+    var receitaTotal = receitaBrutaVendas + certReceita;
+    var tributosTotal = tributosVendas + tributosCertEstimado;
+    var receitaLiquida = receitaTotal - tributosTotal;
+    var carga = receitaTotal>0 ? (tributosTotal/receitaTotal*100) : 0;
 
     document.getElementById("kpi-vendas").innerHTML = [
       kpiCard("Total de vendas", fmtInt(vendas.length), "registros no período", ""),
-      kpiCard("Receita total", fmtBRL(receitaBruta), "soma dos valores faturados", "blue"),
-      kpiCard("Receita líquida após tributos", fmtBRL(receitaLiquida), "base de cálculo consolidada", "cyan"),
-      kpiCard("Carga tributária", fmtPct(carga), "tributos: " + fmtBRL(tributos), "amber"),
-      kpiCard("Ticket médio", fmtBRL(ticketMedio), "receita ÷ nº de vendas", ""),
+      kpiCard("Receita total", fmtBRL(receitaTotal), "consultoria/assessoria + certificado digital", "blue"),
+      kpiCard("Receita líquida após tributos", fmtBRL(receitaLiquida), "receita total − tributos incidentes", "cyan"),
+      kpiCard("Carga tributária", fmtPct(carga), "tributos: " + fmtBRL(tributosTotal) + " · estimativa 6% (Simples, Anexo III, 1ª faixa) sobre certificado", "amber"),
+      kpiCard("Ticket médio", fmtBRL(ticketMedio), "receita de vendas ÷ nº de vendas", ""),
       kpiCard("Comissão total", fmtBRL(comissaoTotal), "soma de comissões de consultores", "purple"),
     ].join("");
 
@@ -738,7 +753,6 @@
 
     // ── Certificado digital ──
     var certVendas = certificados.length;
-    var certReceita = certificados.reduce(function(s,c){return s+c.VALOR;},0);
     var tipos = {};
     certificados.forEach(function(c){ tipos[c.TIPO_CERTIFICADO] = (tipos[c.TIPO_CERTIFICADO]||0)+1; });
     var tiposCount = Object.keys(tipos).filter(function(t){return t!=="Não informado";}).length;
