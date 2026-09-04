@@ -382,10 +382,8 @@
   var VENDAS_ID = "19dztS8thiK5pzfZgMi5bOulSqjyx-fPverkgfFJArnU";
   var CLIENTES_ID = "1bvMYXoTDYsQPzZNuKXeEyFLBdmhXYbAyTPdAxmHwx-w";
   var CERTIFICADOS_ID = "1gVftYlgGGTXYwygHX5GSZ2ZDTNDalNmTWThxJY5QIng";
-  // Aba de clientes endereçada por gid (primeira aba do arquivo) em vez de nome —
-  // o nome exato dessa aba não foi confirmado, e um nome errado no GViz pode cair
-  // de volta pra outra aba sem avisar (mesma causa da duplicação de vendas corrigida antes).
-  var SHEET_CLIENTES = {gid: 0};
+  var SHEET_CLIENTES = "Controle de Clientes";
+  var SHEET_SAIDAS = "Saídas / Baixa Escritório.";
   var SHEET_CERTIFICADOS = "Gestão de Vendas";
 
   // Alíquota nominal do Simples Nacional — Anexo III, 1ª faixa (RBT12 até R$ 180.000,00,
@@ -912,9 +910,7 @@
       return fetchGviz(VENDAS_ID, m).then(function(table){ return parseVendasTable(table, m); });
     });
     var clientesPromise = fetchGviz(CLIENTES_ID, SHEET_CLIENTES).then(parseClientesTable);
-    // Aba de saídas/baixa ainda não confirmada nesta planilha — sem um nome ou gid
-    // certo, arriscamos misturar dados de outra aba. Fica vazia até confirmar.
-    var saidasPromise = Promise.resolve([]);
+    var saidasPromise = fetchGviz(CLIENTES_ID, SHEET_SAIDAS).then(parseSaidasTable);
     var certPromise = fetchGviz(CERTIFICADOS_ID, SHEET_CERTIFICADOS).then(parseCertificadosTable);
 
     Promise.all(vendasPromises.concat([clientesPromise, saidasPromise, certPromise])).then(function(results){
