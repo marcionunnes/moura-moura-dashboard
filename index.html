@@ -509,6 +509,11 @@
       var dataVenda = idxDataVenda>=0 ? parseGvizDate(c[idxDataVenda] && c[idxDataVenda].v) : null;
       if (!cliente && !servico && valor===0 && !consultor) continue;
       if (["exemplo cliente a","exemplo cliente b","exemplo cliente c"].indexOf(normalizeText(cliente))>=0) continue;
+      // O mês real vem da Data da Venda, não da aba pedida: se o GViz cair de volta
+      // pra aba padrão (aba com o nome pedido não existe), isso evita atribuir a
+      // mesma venda a 12 meses diferentes.
+      var mesReal = dataVenda ? MESES[dataVenda.month] : mes;
+      var dataKey = dataVenda ? (dataVenda.day+"/"+dataVenda.month+"/"+dataVenda.year) : "";
       out.push({
         SERVICO: servico || "Não informado",
         VALOR: valor,
@@ -516,8 +521,9 @@
         CONSULTOR: consultor || "Não informado",
         COMISSAO: comissao,
         STATUS: status,
-        MES: mes,
+        MES: mesReal || mes,
         ANO: dataVenda ? String(dataVenda.year) : String(new Date().getFullYear()),
+        _key: [cliente, servico, valor, dataKey, consultor].join("|"),
       });
     }
     return out;
@@ -871,6 +877,21 @@
     document.getElementById("year-now").textContent = now.getFullYear();
   }
 
+  /** Remove vendas idênticas (mesma venda lida mais de uma vez, ex.: aba pedida
+   * inexistente caindo de volta pra aba padrão do GViz). */
+  function dedupeByKey(list){
+    var seen = {};
+    var out = [];
+    for (var i=0;i<list.length;i++){
+      var v = list[i];
+      var k = v._key || ("_" + i);
+      if (seen[k]) continue;
+      seen[k] = true;
+      out.push(v);
+    }
+    return out;
+  }
+
   // ─── Carregamento inicial ──────────────────────────────────────────────────────
   function loadAll(){
     setBanner("loading", "Carregando dados ao vivo das planilhas do Google Sheets…");
@@ -884,7 +905,7 @@
 
     Promise.all(vendasPromises.concat([clientesPromise, saidasPromise, certPromise])).then(function(results){
       var vendasResults = results.slice(0, MESES.length);
-      STATE.vendas = Array.prototype.concat.apply([], vendasResults);
+      STATE.vendas = dedupeByKey(Array.prototype.concat.apply([], vendasResults));
       STATE.clientes = results[MESES.length] || [];
       STATE.saidas = results[MESES.length+1] || [];
       STATE.certificados = results[MESES.length+2] || [];
