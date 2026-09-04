@@ -300,6 +300,7 @@
     <select id="filter-ano" aria-label="Filtrar por ano"><option value="">Todos os anos</option></select>
     <select id="filter-mes" aria-label="Filtrar por mês"><option value="">Todos os meses</option></select>
     <button class="clear" id="filter-clear" type="button">Limpar filtros</button>
+    <span class="badge" id="filter-summary" style="margin-left:auto"></span>
   </div>
 
   <main>
@@ -684,6 +685,15 @@
   }
 
   function computeAndRender(){
+    var anoSel = document.getElementById("filter-ano").value;
+    var mesSel = document.getElementById("filter-mes").value;
+    var summary = document.getElementById("filter-summary");
+    if (mesSel || anoSel){
+      summary.textContent = "Mostrando: " + (mesSel || "todos os meses") + (anoSel ? "/" + anoSel : " (todos os anos)");
+    } else {
+      summary.textContent = "Mostrando: todos os períodos";
+    }
+
     var vendas = applyFilters(STATE.vendas);
     var clientes = applyFilters(STATE.clientes);
     var certificados = applyFilters(STATE.certificados);
@@ -887,9 +897,25 @@
         setBanner();
       }
       populateFilters();
+      applyDefaultMonthFilter();
       computeAndRender();
       setUpdated();
     });
+  }
+
+  /** Por padrão, o painel mostra só o mês corrente (não o ano todo somado). */
+  function applyDefaultMonthFilter(){
+    var anoSelect = document.getElementById("filter-ano");
+    var mesSelect = document.getElementById("filter-mes");
+    var now = new Date();
+    var anoAtual = String(now.getFullYear());
+    var mesAtual = MESES[now.getMonth()];
+
+    var anoDisponivel = Array.prototype.some.call(anoSelect.options, function(o){ return o.value === anoAtual; });
+    var mesDisponivel = Array.prototype.some.call(mesSelect.options, function(o){ return o.value === mesAtual; });
+
+    if (anoDisponivel) anoSelect.value = anoAtual;
+    if (mesDisponivel) mesSelect.value = mesAtual;
   }
 
   document.getElementById("filter-ano").addEventListener("change", computeAndRender);
