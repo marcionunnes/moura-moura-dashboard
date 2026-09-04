@@ -380,10 +380,12 @@
 
   // ─── Config: planilhas-fonte (leitura pública via GViz) ──────────────────────
   var VENDAS_ID = "19dztS8thiK5pzfZgMi5bOulSqjyx-fPverkgfFJArnU";
-  var CLIENTES_ID = "1GLb5V6yK5cA9NpslJN6yToO0pWVVbSJObaX5zNtBi0A";
+  var CLIENTES_ID = "1bvMYXoTDYsQPzZNuKXeEyFLBdmhXYbAyTPdAxmHwx-w";
   var CERTIFICADOS_ID = "1gVftYlgGGTXYwygHX5GSZ2ZDTNDalNmTWThxJY5QIng";
-  var SHEET_CLIENTES = "Controle de Clientes";
-  var SHEET_SAIDAS = "Saídas / Baixa Escritório.";
+  // Aba de clientes endereçada por gid (primeira aba do arquivo) em vez de nome —
+  // o nome exato dessa aba não foi confirmado, e um nome errado no GViz pode cair
+  // de volta pra outra aba sem avisar (mesma causa da duplicação de vendas corrigida antes).
+  var SHEET_CLIENTES = {gid: 0};
   var SHEET_CERTIFICADOS = "Gestão de Vendas";
 
   // Alíquota nominal do Simples Nacional — Anexo III, 1ª faixa (RBT12 até R$ 180.000,00,
@@ -404,7 +406,10 @@
 
   // ─── GViz JSONP fetch (funciona em qualquer origem, sem servidor/proxy) ──────
   var cbCounter = 0;
-  function fetchGviz(spreadsheetId, sheetName, timeoutMs){
+  /** sheetRef: nome da aba (string) ou {gid:N} para endereçar por posição/gid sem
+   * depender do nome — usado quando o nome exato da aba não está confirmado, já que
+   * um nome de aba inexistente pode fazer o GViz cair de volta pra outra aba. */
+  function fetchGviz(spreadsheetId, sheetRef, timeoutMs){
     return new Promise(function(resolve){
       var cbName = "__gviz_cb_" + (cbCounter++);
       var settled = false;
@@ -425,9 +430,11 @@
         cleanup();
         resolve(null);
       };
+      var refParam = (sheetRef && typeof sheetRef === "object" && "gid" in sheetRef)
+        ? "&gid=" + encodeURIComponent(sheetRef.gid)
+        : "&sheet=" + encodeURIComponent(sheetRef);
       var url = "https://docs.google.com/spreadsheets/d/" + spreadsheetId +
-        "/gviz/tq?tqx=out:json;responseHandler:" + cbName +
-        "&sheet=" + encodeURIComponent(sheetName);
+        "/gviz/tq?tqx=out:json;responseHandler:" + cbName + refParam;
       script.src = url;
       document.head.appendChild(script);
       setTimeout(function(){
@@ -486,6 +493,8 @@
     var idxComissao = colIndex(cols, ["comissão","comissao"]);
     var idxStatus = colIndex(cols, ["status"]);
     var idxDataVenda = colIndex(cols, ["data da venda","data venda"]);
+    var idxMes = colIndex(cols, ["mês","mes"]);
+    var idxAno = colIndex(cols, ["ano"]);
 
     if (idxCliente < 0 && rows.length){
       var n = (rows[0].c||[]).length;
@@ -509,10 +518,13 @@
       var dataVenda = idxDataVenda>=0 ? parseGvizDate(c[idxDataVenda] && c[idxDataVenda].v) : null;
       if (!cliente && !servico && valor===0 && !consultor) continue;
       if (["exemplo cliente a","exemplo cliente b","exemplo cliente c"].indexOf(normalizeText(cliente))>=0) continue;
-      // O mês real vem da Data da Venda, não da aba pedida: se o GViz cair de volta
-      // pra aba padrão (aba com o nome pedido não existe), isso evita atribuir a
-      // mesma venda a 12 meses diferentes.
-      var mesReal = dataVenda ? MESES[dataVenda.month] : mes;
+      // Mês/Ano vêm das colunas próprias da planilha (classificação da equipe), com
+      // fallback pra Data da Venda e por último pro nome da aba pedida — evita
+      // atribuir a mesma venda ao mês errado se a aba pedida não existir no GViz.
+      var mesCelula = idxMes>=0 ? cellText(c[idxMes]) : "";
+      var anoCelula = idxAno>=0 ? cellNumber(c[idxAno]) : 0;
+      var mesReal = mesCelula || (dataVenda ? MESES[dataVenda.month] : mes);
+      var anoReal = anoCelula ? String(Math.round(anoCelula)) : (dataVenda ? String(dataVenda.year) : String(new Date().getFullYear()));
       var dataKey = dataVenda ? (dataVenda.day+"/"+dataVenda.month+"/"+dataVenda.year) : "";
       out.push({
         SERVICO: servico || "Não informado",
@@ -521,8 +533,8 @@
         CONSULTOR: consultor || "Não informado",
         COMISSAO: comissao,
         STATUS: status,
-        MES: mesReal || mes,
-        ANO: dataVenda ? String(dataVenda.year) : String(new Date().getFullYear()),
+        MES: mesReal,
+        ANO: anoReal,
         _key: [cliente, servico, valor, dataKey, consultor].join("|"),
       });
     }
@@ -900,7 +912,9 @@
       return fetchGviz(VENDAS_ID, m).then(function(table){ return parseVendasTable(table, m); });
     });
     var clientesPromise = fetchGviz(CLIENTES_ID, SHEET_CLIENTES).then(parseClientesTable);
-    var saidasPromise = fetchGviz(CLIENTES_ID, SHEET_SAIDAS).then(parseSaidasTable);
+    // Aba de saídas/baixa ainda não confirmada nesta planilha — sem um nome ou gid
+    // certo, arriscamos misturar dados de outra aba. Fica vazia até confirmar.
+    var saidasPromise = Promise.resolve([]);
     var certPromise = fetchGviz(CERTIFICADOS_ID, SHEET_CERTIFICADOS).then(parseCertificadosTable);
 
     Promise.all(vendasPromises.concat([clientesPromise, saidasPromise, certPromise])).then(function(results){
