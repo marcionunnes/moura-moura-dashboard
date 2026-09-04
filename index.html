@@ -180,8 +180,8 @@
   .chart h3{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:14px}
   .chart .empty{color:var(--muted);font-size:12.5px;padding:20px 0;text-align:center}
   .bars{
-    height:150px;display:flex;align-items:flex-end;gap:10px;
-    border-bottom:1px solid var(--line);padding:0 4px 0;overflow-x:auto;
+    height:172px;display:flex;align-items:flex-end;gap:10px;
+    border-bottom:1px solid var(--line);padding:24px 4px 0;overflow-x:auto;
   }
   .bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:34px}
   .bar{
@@ -632,7 +632,7 @@
     if (!data.length){ container.innerHTML = '<p class="empty">Sem dados no período selecionado.</p>'; return; }
     var max = Math.max.apply(null, data.map(function(d){return d.value;}).concat([1]));
     container.innerHTML = '<div class="bars">' + data.map(function(d,i){
-      var h = Math.max(4, d.value/max*140);
+      var h = Math.max(4, d.value/max*118);
       return '<div class="bar-wrap"><div class="bar ' + (d.cls||'') + '" style="height:' + h + 'px"><span>' + escapeHtml(d.valueLabel) + '</span></div>' +
         '<div class="bar-label">' + escapeHtml(d.label) + '</div></div>';
     }).join('') + '</div>';
