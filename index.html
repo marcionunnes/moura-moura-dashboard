@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Moura &amp; Moura Contadores — Painel Executivo</title>
-<meta name="description" content="Painel executivo com indicadores consolidados de vendas, honorários, clientes e certificados digitais da Moura &amp; Moura Contadores.">
+<meta name="description" content="Painel executivo ao vivo com vendas, honorários, certificados digitais e evolução de clientes da Moura &amp; Moura Contadores.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -20,6 +20,7 @@
     --cyan:#22d3ee;
     --amber:#facc15;
     --coral:#fb7185;
+    --purple:#a78bfa;
     --ink:#eef2fc;
     --muted:#a9b8e0;
     --line:#22366f;
@@ -50,8 +51,9 @@
   p{margin:0}
   a{color:var(--mint)}
   img{max-width:100%}
+  button, select{font-family:inherit}
 
-  .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 56px}
 
   /* ---------- Header ---------- */
   .site-header{
@@ -81,21 +83,55 @@
     font-size:11.5px;color:var(--muted);
   }
   .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+  .badge .dot.live{animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---------- Status banner ---------- */
+  #status-banner{
+    display:none;
+    align-items:center;gap:10px;
+    padding:11px 14px;border-radius:var(--radius-sm);
+    background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35);
+    color:#ffd7dd;font-size:12.5px;margin-bottom:18px;
+  }
+  #status-banner.show{display:flex}
+  #status-banner.loading{background:rgba(34,211,238,.10);border-color:rgba(34,211,238,.3);color:#cdeffb}
+
+  /* ---------- Toolbar / filters ---------- */
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;
+  }
+  .toolbar select{
+    background:var(--navy-800);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;font-size:12.5px;cursor:pointer;
+  }
+  .toolbar select:focus-visible, button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .toolbar .toolbar-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .toolbar button.clear{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:8px 12px;font-size:12.5px;cursor:pointer;transition:border-color .15s var(--ease),color .15s var(--ease);
+  }
+  .toolbar button.clear:hover{border-color:var(--coral);color:#ffd7dd}
 
   /* ---------- Section shell ---------- */
-  section{margin:28px 0}
-  .section-head{margin-bottom:14px}
+  section{margin:30px 0}
+  .section-head{margin-bottom:14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-end}
   .section-head h2{font-size:clamp(16px,3vw,19px);font-weight:700}
   .section-head p{color:var(--muted);font-size:13px;margin-top:4px}
+  .section-tag{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);
+    background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);
+    padding:4px 9px;border-radius:999px;white-space:nowrap;
+  }
 
   /* ---------- KPI cards ---------- */
-  .kpi-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:12px;
-  }
+  .kpi-grid{display:grid;grid-template-columns:1fr;gap:12px}
   @media(min-width:520px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
   @media(min-width:900px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+  .kpi-grid.cols-6{grid-template-columns:1fr}
+  @media(min-width:520px){.kpi-grid.cols-6{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:900px){.kpi-grid.cols-6{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:1180px){.kpi-grid.cols-6{grid-template-columns:repeat(6,1fr)}}
 
   .kpi{
     background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
@@ -110,13 +146,27 @@
   .kpi.accent-blue{border-top-color:var(--blue-500)}
   .kpi.accent-cyan{border-top-color:var(--cyan)}
   .kpi.accent-amber{border-top-color:var(--amber)}
+  .kpi.accent-purple{border-top-color:var(--purple)}
+  .kpi.accent-coral{border-top-color:var(--coral)}
   .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-  .kpi .value{font-family:var(--font-head);font-size:clamp(20px,4vw,26px);font-weight:700;margin-top:8px;letter-spacing:-.01em}
+  .kpi .value{font-family:var(--font-head);font-size:clamp(19px,4vw,25px);font-weight:700;margin-top:8px;letter-spacing:-.01em}
   .kpi .note{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* ---------- Goal / progress bar ---------- */
+  .goal-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;box-shadow:var(--shadow);
+  }
+  .goal-card h3{font-size:13px;font-weight:600;margin-bottom:10px}
+  .goal-track{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .goal-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--cyan));width:0;transition:width .8s var(--ease)}
+  .goal-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px}
 
   /* ---------- Charts ---------- */
   .charts{display:grid;grid-template-columns:1fr;gap:14px}
-  @media(min-width:820px){.charts{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:820px){.charts{grid-template-columns:repeat(2,1fr)}}
+  .charts.cols-3{grid-template-columns:1fr}
+  @media(min-width:820px){.charts.cols-3{grid-template-columns:repeat(3,1fr)}}
 
   .chart{
     background:var(--panel);
@@ -128,13 +178,14 @@
     animation:rise .6s var(--ease) forwards;
   }
   .chart h3{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:14px}
+  .chart .empty{color:var(--muted);font-size:12.5px;padding:20px 0;text-align:center}
   .bars{
-    height:150px;display:flex;align-items:flex-end;gap:14px;
-    border-bottom:1px solid var(--line);padding:0 4px 0;
+    height:150px;display:flex;align-items:flex-end;gap:10px;
+    border-bottom:1px solid var(--line);padding:0 4px 0;overflow-x:auto;
   }
-  .bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+  .bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:34px}
   .bar{
-    width:min(46px,70%);
+    width:min(40px,70%);
     border-radius:7px 7px 2px 2px;
     background:linear-gradient(180deg,var(--mint),var(--mint-strong));
     min-height:4px;position:relative;
@@ -144,13 +195,43 @@
   .bar.blue{background:linear-gradient(180deg,var(--cyan),var(--blue-500))}
   .bar.amber{background:linear-gradient(180deg,var(--amber),#c9971a)}
   .bar.purple{background:linear-gradient(180deg,#c4b5fd,#8b6ff0)}
+  .bar.coral{background:linear-gradient(180deg,#fda4af,var(--coral))}
   .bar span{
     position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
-    font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;
+    font-size:10.5px;font-weight:600;color:var(--ink);white-space:nowrap;
   }
-  .bar-label{font-size:11px;color:var(--muted);margin-top:8px;text-align:center}
+  .bar-label{font-size:10.5px;color:var(--muted);margin-top:8px;text-align:center;white-space:nowrap}
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--muted)}
   .legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+
+  /* ---------- Donut ---------- */
+  .donut-wrap{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:center}
+  .donut{width:130px;height:130px;border-radius:50%;flex:none;position:relative}
+  .donut-hole{
+    position:absolute;inset:18px;border-radius:50%;
+    background:var(--navy-900);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--muted);text-align:center;
+  }
+
+  /* ---------- Ranked horizontal bars ---------- */
+  .hbar-list{display:flex;flex-direction:column;gap:10px}
+  .hbar-row{display:grid;grid-template-columns:88px 1fr 78px;align-items:center;gap:10px;font-size:12px}
+  .hbar-label{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hbar-track{height:9px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+  .hbar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--cyan));width:0;transition:width .8s var(--ease)}
+  .hbar-value{text-align:right;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  /* ---------- Segment cards ---------- */
+  .segment-grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:700px){.segment-grid{grid-template-columns:repeat(2,1fr)}}
+  .segment-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .segment-card h3{font-size:14px;margin-bottom:10px}
+  .segment-card .big{font-family:var(--font-head);font-size:24px;font-weight:700}
+  .segment-card .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
 
   /* ---------- Notes / sources ---------- */
   .notes{
@@ -179,19 +260,18 @@
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
   @keyframes grow{to{transform:scaleY(1)}}
   .kpi-grid .kpi:nth-child(1){animation-delay:.02s}
-  .kpi-grid .kpi:nth-child(2){animation-delay:.08s}
-  .kpi-grid .kpi:nth-child(3){animation-delay:.14s}
-  .kpi-grid .kpi:nth-child(4){animation-delay:.20s}
-  .kpi-grid .kpi:nth-child(5){animation-delay:.26s}
-  .kpi-grid .kpi:nth-child(6){animation-delay:.32s}
-  .kpi-grid .kpi:nth-child(7){animation-delay:.38s}
-  .kpi-grid .kpi:nth-child(8){animation-delay:.44s}
+  .kpi-grid .kpi:nth-child(2){animation-delay:.07s}
+  .kpi-grid .kpi:nth-child(3){animation-delay:.12s}
+  .kpi-grid .kpi:nth-child(4){animation-delay:.17s}
+  .kpi-grid .kpi:nth-child(5){animation-delay:.22s}
+  .kpi-grid .kpi:nth-child(6){animation-delay:.27s}
   .charts .chart:nth-child(1){animation-delay:.10s}
   .charts .chart:nth-child(2){animation-delay:.18s}
   .charts .chart:nth-child(3){animation-delay:.26s}
 
   @media (prefers-reduced-motion: reduce){
     .kpi,.chart,.bar{animation:none !important;opacity:1 !important;transform:none !important}
+    .goal-fill,.hbar-fill{transition:none !important}
   }
 </style>
 </head>
@@ -203,120 +283,84 @@
       <div class="brand-mark" aria-hidden="true">MM</div>
       <div class="brand-text">
         <h1>Moura &amp; Moura Contadores</h1>
-        <p>Painel executivo — vendas, honorários, base de clientes e certificados digitais</p>
+        <p>Painel executivo — vendas, certificados digitais e evolução de clientes</p>
       </div>
     </div>
     <div class="header-meta">
-      <span class="badge"><span class="dot"></span>Dados consolidados até 29/08/2026</span>
+      <span class="badge"><span class="dot live" id="live-dot"></span><span id="updated-label">Conectando às planilhas…</span></span>
       <span class="badge">100% estático · sem backend</span>
-      <span class="badge">Indicadores agregados — sem dados individuais de clientes</span>
+      <span class="badge">Sem CNPJ ou nome individual de cliente</span>
     </div>
   </header>
+
+  <div id="status-banner" role="status"></div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Filtrar por</span>
+    <select id="filter-ano" aria-label="Filtrar por ano"><option value="">Todos os anos</option></select>
+    <select id="filter-mes" aria-label="Filtrar por mês"><option value="">Todos os meses</option></select>
+    <button class="clear" id="filter-clear" type="button">Limpar filtros</button>
+  </div>
 
   <main>
 
     <section aria-labelledby="kpi-title">
       <div class="section-head">
-        <h2 id="kpi-title">Indicadores gerais</h2>
-        <p>Resumo consolidado do período — registros deduplicados na origem.</p>
+        <div>
+          <h2 id="kpi-title">Vendas e receita</h2>
+          <p>Consolidado das 12 abas mensais da planilha de vendas.</p>
+        </div>
       </div>
-      <div class="kpi-grid">
-        <article class="kpi">
-          <div class="label">Total de vendas</div>
-          <div class="value">5</div>
-          <div class="note">registros deduplicados</div>
-        </article>
-        <article class="kpi accent-blue">
-          <div class="label">Receita total</div>
-          <div class="value">R$ 14.073,79</div>
-          <div class="note">soma dos valores faturados</div>
-        </article>
-        <article class="kpi accent-cyan">
-          <div class="label">Receita líquida após tributos</div>
-          <div class="value">R$ 13.229,36</div>
-          <div class="note">base de cálculo consolidada</div>
-        </article>
-        <article class="kpi accent-amber">
-          <div class="label">Tributos deduzidos</div>
-          <div class="value">R$ 844,43</div>
-          <div class="note">carga efetiva de 6,00%</div>
-        </article>
-        <article class="kpi">
-          <div class="label">Comissão total</div>
-          <div class="value">R$ 5.139,37</div>
-          <div class="note">soma de comissões de consultores</div>
-        </article>
-        <article class="kpi accent-blue">
-          <div class="label">Ticket médio</div>
-          <div class="value">R$ 2.814,76</div>
-          <div class="note">receita ÷ número de vendas</div>
-        </article>
-        <article class="kpi accent-cyan">
-          <div class="label">Clientes cadastrados</div>
-          <div class="value">78</div>
-          <div class="note">base ativa de clientes</div>
-        </article>
-        <article class="kpi accent-amber">
-          <div class="label">Certificados digitais</div>
-          <div class="value">3</div>
-          <div class="note">R$ 620,00 em emissões</div>
-        </article>
-      </div>
+      <div class="kpi-grid" id="kpi-vendas"></div>
     </section>
 
     <section aria-labelledby="charts-title">
       <div class="section-head">
-        <h2 id="charts-title">Séries e distribuições</h2>
-        <p>Visão consolidada por período e por categoria.</p>
+        <div>
+          <h2 id="charts-title">Séries e distribuições</h2>
+          <p>Evolução mensal e status das vendas no período filtrado.</p>
+        </div>
       </div>
       <div class="charts">
+        <div class="chart"><h3>Evolução mensal de receita</h3><div id="chart-receita-mensal"></div></div>
+        <div class="chart"><h3>Distribuição por status</h3><div id="chart-status" class="donut-wrap"></div></div>
+      </div>
+      <div class="charts" style="margin-top:14px">
+        <div class="chart"><h3>Top serviços por receita</h3><div id="chart-top-servicos" class="hbar-list"></div></div>
+        <div class="chart"><h3>Top consultores por comissão</h3><div id="chart-top-consultores" class="hbar-list"></div></div>
+      </div>
+    </section>
 
-        <div class="chart">
-          <h3>Evolução mensal de receita</h3>
-          <div class="bars">
-            <div class="bar-wrap">
-              <div class="bar" style="--h:145.0px;height:145.0px"><span>R$ 8.216,31</span></div>
-              <div class="bar-label">Julho 2026</div>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar" style="--h:103.4px;height:103.4px"><span>R$ 5.857,48</span></div>
-              <div class="bar-label">Agosto 2026</div>
-            </div>
-          </div>
+    <section aria-labelledby="cert-title">
+      <div class="section-head">
+        <div>
+          <h2 id="cert-title">Certificado digital</h2>
+          <p>Vendas, receita e projeção de fechamento do mês corrente.</p>
         </div>
+        <span class="section-tag">Ao vivo</span>
+      </div>
+      <div class="kpi-grid" id="kpi-certificado" style="margin-bottom:14px"></div>
+      <div class="charts">
+        <div class="chart"><h3>Evolução mensal — Certificado digital</h3><div id="chart-cert-mensal"></div></div>
+        <div class="chart"><h3>Vendas por tipo de certificado</h3><div id="chart-cert-tipo" class="donut-wrap"></div></div>
+      </div>
+    </section>
 
-        <div class="chart">
-          <h3>Status de pagamento</h3>
-          <div class="bars">
-            <div class="bar-wrap">
-              <div class="bar amber" style="height:145.0px"><span>4</span></div>
-              <div class="bar-label">A Receber</div>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar" style="height:36.2px"><span>1</span></div>
-              <div class="bar-label">Pago</div>
-            </div>
-          </div>
-          <div class="legend">
-            <span><i class="dot" style="background:var(--amber)"></i>A Receber: 4 (80,0%)</span>
-            <span><i class="dot" style="background:var(--mint)"></i>Pago: 1 (20,0%)</span>
-          </div>
+    <section aria-labelledby="clientes-title">
+      <div class="section-head">
+        <div>
+          <h2 id="clientes-title">Clientes</h2>
+          <p>Entradas, saídas e composição da carteira por segmento de serviço.</p>
         </div>
-
-        <div class="chart">
-          <h3>Certificados por tipo</h3>
-          <div class="bars">
-            <div class="bar-wrap">
-              <div class="bar purple" style="height:145.0px"><span>2</span></div>
-              <div class="bar-label">e-CNPJ</div>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar purple" style="height:72.5px"><span>1</span></div>
-              <div class="bar-label">e-CPF</div>
-            </div>
-          </div>
-        </div>
-
+      </div>
+      <div class="kpi-grid cols-6" id="kpi-clientes" style="margin-bottom:14px"></div>
+      <div class="charts">
+        <div class="chart"><h3>Novos clientes por mês</h3><div id="chart-clientes-mensal"></div></div>
+        <div class="chart"><h3>Entradas × saídas por mês</h3><div id="chart-entradas-saidas"></div></div>
+      </div>
+      <div class="segment-grid" style="margin-top:14px">
+        <div class="segment-card" id="segment-bpo"></div>
+        <div class="segment-card" id="segment-assessoria"></div>
       </div>
     </section>
 
@@ -327,10 +371,10 @@
       <div class="notes">
         <span class="ico" aria-hidden="true">🔒</span>
         <p>
-          Este painel público exibe apenas <strong>indicadores agregados</strong> (totais, médias e distribuições).
-          Registros individuais — nomes de clientes, CNPJs, honorários por contrato e responsáveis — não são
-          publicados aqui por política de confidencialidade e proteção de dados (LGPD). A base analítica completa
-          fica disponível apenas em ambiente interno.
+          Este painel lê ao vivo as planilhas Google (Vendas, Clientes e Certificados Digitais), com leitura pública
+          somente-leitura. Ele mostra apenas <strong>indicadores agregados</strong>: totais, médias, evoluções mensais
+          e rankings por serviço/consultor. Nomes de clientes, CNPJs e honorários individuais por contrato não são
+          exibidos aqui — a base analítica completa fica disponível apenas no sistema interno, com login.
         </p>
       </div>
     </section>
@@ -343,15 +387,15 @@
       <div class="source-grid">
         <div class="source">
           <strong>Vendas</strong>
-          Leitura única da aba consolidada; registros idênticos não são repetidos. Atualizado em 29/08/2026.
+          12 abas mensais (Janeiro–Dezembro). Receita líquida usa a Base de Cálculo quando disponível; carga tributária = tributos ÷ receita bruta.
         </div>
         <div class="source">
           <strong>Status de pagamento</strong>
-          Pago / Recebido / Quitado / Liquidado → <em>Pago</em>. A Receber / Pendente / Aguardando / Em Aberto → <em>A Receber</em>.
+          Pago / Recebido / Quitado / Liquidado → <em>Pago</em>. A Receber / Pendente / Aguardando / Em Aberto → <em>A Receber</em>. Atrasado / Vencido → <em>Atrasado</em>.
         </div>
         <div class="source">
-          <strong>Certificados digitais</strong>
-          Emissões de e-CNPJ e e-CPF registradas no período, com valor total de R$ 620,00.
+          <strong>Certificados e clientes</strong>
+          Certificados: aba consolidada "Gestão de Vendas". Clientes: aba "Controle de Clientes"; segmento classificado por BPO Financeiro ou Assessoria Contábil.
         </div>
       </div>
     </section>
@@ -359,10 +403,527 @@
   </main>
 
   <footer>
-    <span>© 2026 Moura &amp; Moura Contadores — painel executivo estático</span>
-    <span>Dados consolidados em 29/08/2026</span>
+    <span>© <span id="year-now">2026</span> Moura &amp; Moura Contadores — painel executivo</span>
+    <span id="footer-updated">Atualizando…</span>
   </footer>
 
 </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ─── Config: planilhas-fonte (leitura pública via GViz) ──────────────────────
+  var VENDAS_ID = "19dztS8thiK5pzfZgMi5bOulSqjyx-fPverkgfFJArnU";
+  var CLIENTES_ID = "1GLb5V6yK5cA9NpslJN6yToO0pWVVbSJObaX5zNtBi0A";
+  var CERTIFICADOS_ID = "1gVftYlgGGTXYwygHX5GSZ2ZDTNDalNmTWThxJY5QIng";
+  var SHEET_CLIENTES = "Controle de Clientes";
+  var SHEET_SAIDAS = "Saídas / Baixa Escritório.";
+  var SHEET_CERTIFICADOS = "Gestão de Vendas";
+
+  var MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var MESES_ABREV = {Janeiro:"Jan",Fevereiro:"Fev",Março:"Mar",Abril:"Abr",Maio:"Mai",Junho:"Jun",Julho:"Jul",Agosto:"Ago",Setembro:"Set",Outubro:"Out",Novembro:"Nov",Dezembro:"Dez"};
+
+  var fmtBRL = function(v){ return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); };
+  var fmtPct = function(v){ return (Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + "%"; };
+  var fmtInt = function(v){ return (Number(v)||0).toLocaleString("pt-BR"); };
+  var escapeHtml = function(s){
+    return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  };
+
+  // ─── GViz JSONP fetch (funciona em qualquer origem, sem servidor/proxy) ──────
+  var cbCounter = 0;
+  function fetchGviz(spreadsheetId, sheetName, timeoutMs){
+    return new Promise(function(resolve){
+      var cbName = "__gviz_cb_" + (cbCounter++);
+      var settled = false;
+      var script = document.createElement("script");
+      function cleanup(){
+        try{ delete window[cbName]; }catch(e){ window[cbName]=undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+      window[cbName] = function(json){
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(json && json.table ? json.table : null);
+      };
+      script.onerror = function(){
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(null);
+      };
+      var url = "https://docs.google.com/spreadsheets/d/" + spreadsheetId +
+        "/gviz/tq?tqx=out:json;responseHandler:" + cbName +
+        "&sheet=" + encodeURIComponent(sheetName);
+      script.src = url;
+      document.head.appendChild(script);
+      setTimeout(function(){
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(null);
+      }, timeoutMs || 15000);
+    });
+  }
+
+  function cellText(cell){
+    if (!cell) return "";
+    if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    return String(cell.f || "").trim();
+  }
+  function cellNumber(cell){
+    if (!cell) return 0;
+    var direct = Number(cell.v);
+    if (isFinite(direct) && cell.v !== null && cell.v !== "" && cell.v !== undefined) return direct;
+    var raw = String(cell.f || "").replace(/[^\d.,-]/g,"");
+    if (!raw) return 0;
+    var normalized = raw.indexOf(",") >= 0 ? raw.replace(/\./g,"").replace(",",".") : raw;
+    var parsed = Number(normalized);
+    return isFinite(parsed) ? parsed : 0;
+  }
+  function parseGvizDate(raw){
+    if (!raw) return null;
+    var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
+    if (!m) return null;
+    return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
+  }
+  function colIndex(cols, keywords){
+    for (var k=0;k<keywords.length;k++){
+      for (var i=0;i<cols.length;i++){
+        var label = (cols[i].label||"").toLowerCase();
+        if (label.indexOf(keywords[k]) >= 0) return i;
+      }
+    }
+    return -1;
+  }
+  function normalizeText(v){
+    return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  }
+
+  // ─── Parse: Vendas (12 abas mensais) ──────────────────────────────────────────
+  function parseVendasTable(table, mes){
+    if (!table) return [];
+    var cols = table.cols || [];
+    var rows = table.rows || [];
+    var idxCliente = colIndex(cols, ["cliente"]);
+    var idxServico = colIndex(cols, ["serviço","servico","produto"]);
+    var idxValor = colIndex(cols, ["valor"]);
+    var idxBase = colIndex(cols, ["base de cálculo","base de calculo"]);
+    var idxConsultor = colIndex(cols, ["consultor"]);
+    var idxComissao = colIndex(cols, ["comissão","comissao"]);
+    var idxStatus = colIndex(cols, ["status"]);
+    var idxDataVenda = colIndex(cols, ["data da venda","data venda"]);
+
+    if (idxCliente < 0 && rows.length){
+      var n = (rows[0].c||[]).length;
+      if (n >= 9 && idxBase >= 0){ idxCliente=0;idxServico=1;idxValor=2;idxBase=3;idxConsultor=4;idxComissao=5;idxDataVenda=6;idxStatus=8; }
+      else if (n >= 9){ idxCliente=0;idxServico=1;idxValor=2;idxConsultor=3;idxComissao=4;idxDataVenda=5;idxStatus=8; }
+      else { idxCliente=0;idxServico=1;idxValor=2;idxDataVenda=3;idxStatus=6; }
+    }
+
+    var out = [];
+    for (var r=0;r<rows.length;r++){
+      var row = rows[r];
+      if (!row || !row.c) continue;
+      var c = row.c;
+      var cliente = idxCliente>=0 ? cellText(c[idxCliente]) : "";
+      var servico = idxServico>=0 ? cellText(c[idxServico]) : "";
+      var valor = idxValor>=0 ? cellNumber(c[idxValor]) : 0;
+      var base = idxBase>=0 ? cellNumber(c[idxBase]) : valor;
+      var consultor = idxConsultor>=0 ? cellText(c[idxConsultor]) : "";
+      var comissao = idxComissao>=0 ? cellNumber(c[idxComissao]) : 0;
+      var status = idxStatus>=0 ? (cellText(c[idxStatus]) || "Não informado") : "Não informado";
+      var dataVenda = idxDataVenda>=0 ? parseGvizDate(c[idxDataVenda] && c[idxDataVenda].v) : null;
+      if (!cliente && !servico && valor===0 && !consultor) continue;
+      if (["exemplo cliente a","exemplo cliente b","exemplo cliente c"].indexOf(normalizeText(cliente))>=0) continue;
+      out.push({
+        SERVICO: servico || "Não informado",
+        VALOR: valor,
+        BASE_CALCULO: idxBase>=0 ? base : valor,
+        CONSULTOR: consultor || "Não informado",
+        COMISSAO: comissao,
+        STATUS: status,
+        MES: mes,
+        ANO: dataVenda ? String(dataVenda.year) : String(new Date().getFullYear()),
+      });
+    }
+    return out;
+  }
+
+  function classifyStatus(raw){
+    var t = normalizeText(raw);
+    if (t.indexOf("pago")>=0 || t.indexOf("recebid")>=0 || t.indexOf("quitad")>=0 || t.indexOf("liquidad")>=0) return "Pago";
+    if (t.indexOf("atrasad")>=0 || t.indexOf("vencid")>=0) return "Atrasado";
+    if (t.indexOf("cancelad")>=0) return "Cancelado";
+    if (t.indexOf("receber")>=0 || t.indexOf("pendente")>=0 || t.indexOf("aguardando")>=0 || t.indexOf("aberto")>=0) return "A Receber";
+    return "Não informado";
+  }
+
+  // ─── Parse: Clientes ("Controle de Clientes") ─────────────────────────────────
+  function parseClientesTable(table){
+    if (!table) return [];
+    var cols = table.cols || [];
+    var rows = table.rows || [];
+    var idxHonorario = -1, idxSegmento = -1;
+    for (var i=0;i<cols.length;i++){
+      var label = (cols[i].label||"").toLowerCase();
+      if (label.indexOf("honorário")>=0 || label.indexOf("honorario")>=0) idxHonorario = i;
+      if (label.indexOf("assessoria")>=0 && label.indexOf("bpo")>=0) idxSegmento = i;
+    }
+    var out = [];
+    for (var r=0;r<rows.length;r++){
+      var row = rows[r];
+      if (!row || !row.c) continue;
+      var c = row.c;
+      var dataEntrada = parseGvizDate(c[1] && c[1].v);
+      var cliente = cellText(c[2]);
+      if (!cliente) continue;
+      var mes = cellText(c[7]);
+      var anoRaw = c[8] && c[8].v;
+      var ano = anoRaw ? String(Math.round(Number(anoRaw))) : (dataEntrada ? String(dataEntrada.year) : "");
+      out.push({
+        MES: mes,
+        ANO: ano,
+        HONORARIO: idxHonorario>=0 ? cellNumber(c[idxHonorario]) : 0,
+        SEGMENTO_SERVICO: idxSegmento>=0 ? cellText(c[idxSegmento]) : "",
+        REGIME: cellText(c[5]),
+      });
+    }
+    return out;
+  }
+
+  function classifySegment(raw){
+    var t = normalizeText(raw);
+    if (t.indexOf("bpo")>=0) return "BPO Financeiro";
+    if (t.indexOf("assessoria")>=0 || t.indexOf("contabil")>=0) return "Assessoria Contábil";
+    return "Não classificado";
+  }
+
+  // ─── Parse: Saídas ─────────────────────────────────────────────────────────────
+  function parseSaidasTable(table){
+    if (!table) return [];
+    var rows = table.rows || [];
+    var out = [];
+    var start = 0;
+    for (var i=0;i<Math.min(rows.length,5);i++){
+      var row = rows[i];
+      if (!row || !row.c) continue;
+      var text = row.c.map(cellText).join("|").toLowerCase();
+      if (text.indexOf("razão social")>=0 || text.indexOf("razao social")>=0 || text.indexOf("mês")>=0){ start = i+1; break; }
+    }
+    for (var r=start;r<rows.length;r++){
+      var row2 = rows[r];
+      if (!row2 || !row2.c) continue;
+      var c = row2.c;
+      var razao = cellText(c[1]);
+      if (!razao) continue;
+      if (normalizeText(razao).indexOf("razao social")>=0) continue;
+      var mes = cellText(c[5]);
+      var anoRaw = c[6] && c[6].v;
+      out.push({ MES: mes, ANO: anoRaw ? String(Math.round(Number(anoRaw))) : "" });
+    }
+    return out;
+  }
+
+  // ─── Parse: Certificados ("Gestão de Vendas") ─────────────────────────────────
+  function parseCertificadosTable(table){
+    if (!table) return [];
+    var cols = table.cols || [];
+    var rows = table.rows || [];
+    var idxRazao = colIndex(cols, ["razao social","razão social","cliente","nome"]);
+    var idxTipo = colIndex(cols, ["tipo certificado","certificado","tipo"]);
+    var idxMes = colIndex(cols, ["mes","mês"]);
+    var idxAno = colIndex(cols, ["ano"]);
+    var idxValor = colIndex(cols, ["valor","receita"]);
+    var out = [];
+    for (var r=0;r<rows.length;r++){
+      var row = rows[r];
+      if (!row || !row.c) continue;
+      var c = row.c;
+      var razao = idxRazao>=0 ? cellText(c[idxRazao]) : "";
+      var tipo = idxTipo>=0 ? cellText(c[idxTipo]) : "";
+      var valor = idxValor>=0 ? cellNumber(c[idxValor]) : 0;
+      if (!razao && !tipo) continue;
+      out.push({
+        TIPO_CERTIFICADO: tipo || "Não informado",
+        VALOR: valor,
+        MES: idxMes>=0 ? (cellText(c[idxMes]) || "") : "",
+        ANO: idxAno>=0 ? cellText(c[idxAno]) : String(new Date().getFullYear()),
+      });
+    }
+    return out;
+  }
+
+  // ─── Render helpers ────────────────────────────────────────────────────────────
+  var BAR_COLORS = ["", "blue", "amber", "purple", "coral"];
+  function renderBars(container, data){
+    if (!data.length){ container.innerHTML = '<p class="empty">Sem dados no período selecionado.</p>'; return; }
+    var max = Math.max.apply(null, data.map(function(d){return d.value;}).concat([1]));
+    container.innerHTML = '<div class="bars">' + data.map(function(d,i){
+      var h = Math.max(4, d.value/max*140);
+      return '<div class="bar-wrap"><div class="bar ' + (d.cls||'') + '" style="height:' + h + 'px"><span>' + escapeHtml(d.valueLabel) + '</span></div>' +
+        '<div class="bar-label">' + escapeHtml(d.label) + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  var DONUT_PALETTE = ["#3ddc97","#facc15","#fb7185","#a9b8e0","#22d3ee","#a78bfa"];
+  function renderDonut(container, data, centerLabel){
+    if (!data.length){ container.innerHTML = '<p class="empty">Sem dados no período selecionado.</p>'; return; }
+    var total = data.reduce(function(s,d){return s+d.value;},0) || 1;
+    var acc = 0;
+    var stops = data.map(function(d,i){
+      var start = acc/total*360; acc += d.value; var end = acc/total*360;
+      return d.color + ' ' + start.toFixed(2) + 'deg ' + end.toFixed(2) + 'deg';
+    }).join(', ');
+    var legend = data.map(function(d){
+      return '<span><i class="dot" style="background:' + d.color + '"></i>' + escapeHtml(d.label) + ': ' + fmtInt(d.value) + ' (' + (d.value/total*100).toFixed(1) + '%)</span>';
+    }).join('');
+    container.innerHTML =
+      '<div class="donut" style="background:conic-gradient(' + stops + ')"><div class="donut-hole">' + (centerLabel||'') + '</div></div>' +
+      '<div class="legend">' + legend + '</div>';
+  }
+
+  function renderHbars(container, data, formatValue){
+    if (!data.length){ container.innerHTML = '<p class="empty">Sem dados no período selecionado.</p>'; return; }
+    var max = Math.max.apply(null, data.map(function(d){return d.value;}).concat([1]));
+    container.innerHTML = data.map(function(d){
+      return '<div class="hbar-row"><div class="hbar-label" title="' + escapeHtml(d.label) + '">' + escapeHtml(d.label) + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:' + Math.max(3, d.value/max*100) + '%"></div></div>' +
+        '<div class="hbar-value">' + formatValue(d.value) + '</div></div>';
+    }).join('');
+  }
+
+  function kpiCard(label, value, note, accent){
+    return '<article class="kpi ' + (accent?('accent-'+accent):'') + '"><div class="label">' + escapeHtml(label) + '</div>' +
+      '<div class="value">' + value + '</div><div class="note">' + escapeHtml(note||'') + '</div></article>';
+  }
+
+  // ─── Estado global ─────────────────────────────────────────────────────────────
+  var STATE = { vendas: [], clientes: [], saidas: [], certificados: [], loaded: false };
+
+  function applyFilters(list){
+    var ano = document.getElementById("filter-ano").value;
+    var mes = document.getElementById("filter-mes").value;
+    return list.filter(function(r){
+      if (ano && r.ANO !== ano) return false;
+      if (mes && r.MES !== mes) return false;
+      return true;
+    });
+  }
+
+  function computeAndRender(){
+    var vendas = applyFilters(STATE.vendas);
+    var clientes = applyFilters(STATE.clientes);
+    var certificados = applyFilters(STATE.certificados);
+    var saidas = applyFilters(STATE.saidas);
+
+    // ── Vendas / receita ──
+    var receitaBruta = vendas.reduce(function(s,v){return s+v.VALOR;},0);
+    var receitaLiquida = vendas.reduce(function(s,v){return s+(isFinite(v.BASE_CALCULO)?v.BASE_CALCULO:v.VALOR);},0);
+    var tributos = Math.max(0, Math.round((receitaBruta-receitaLiquida)*100)/100);
+    var carga = receitaBruta>0 ? (tributos/receitaBruta*100) : 0;
+    var comissaoTotal = vendas.reduce(function(s,v){return s+v.COMISSAO;},0);
+    var ticketMedio = vendas.length>0 ? receitaBruta/vendas.length : 0;
+
+    document.getElementById("kpi-vendas").innerHTML = [
+      kpiCard("Total de vendas", fmtInt(vendas.length), "registros no período", ""),
+      kpiCard("Receita total", fmtBRL(receitaBruta), "soma dos valores faturados", "blue"),
+      kpiCard("Receita líquida após tributos", fmtBRL(receitaLiquida), "base de cálculo consolidada", "cyan"),
+      kpiCard("Carga tributária", fmtPct(carga), "tributos: " + fmtBRL(tributos), "amber"),
+      kpiCard("Ticket médio", fmtBRL(ticketMedio), "receita ÷ nº de vendas", ""),
+      kpiCard("Comissão total", fmtBRL(comissaoTotal), "soma de comissões de consultores", "purple"),
+    ].join("");
+
+    // Evolução mensal de receita
+    var receitaPorMes = MESES.map(function(m){
+      var soma = vendas.filter(function(v){return v.MES===m;}).reduce(function(s,v){return s+v.VALOR;},0);
+      return { mes: m, valor: soma };
+    }).filter(function(x){return x.valor>0;});
+    renderBars(document.getElementById("chart-receita-mensal"), receitaPorMes.map(function(x){
+      return { label: MESES_ABREV[x.mes], value: x.valor, valueLabel: fmtBRL(x.valor) };
+    }));
+
+    // Distribuição por status
+    var statusMap = {};
+    vendas.forEach(function(v){
+      var cat = classifyStatus(v.STATUS);
+      statusMap[cat] = (statusMap[cat]||0) + 1;
+    });
+    var statusOrder = ["Pago","A Receber","Atrasado","Cancelado","Não informado"];
+    var statusColors = {"Pago":"#3ddc97","A Receber":"#facc15","Atrasado":"#fb7185","Cancelado":"#a9b8e0","Não informado":"#a78bfa"};
+    var statusData = statusOrder.filter(function(k){return statusMap[k];}).map(function(k){
+      return { label:k, value: statusMap[k], color: statusColors[k] };
+    });
+    renderDonut(document.getElementById("chart-status"), statusData, fmtInt(vendas.length)+" vendas");
+
+    // Top serviços por receita
+    var servicoMap = {};
+    vendas.forEach(function(v){ servicoMap[v.SERVICO] = (servicoMap[v.SERVICO]||0) + v.VALOR; });
+    var topServicos = Object.keys(servicoMap).map(function(k){return {label:k, value:servicoMap[k]};})
+      .sort(function(a,b){return b.value-a.value;}).slice(0,6);
+    renderHbars(document.getElementById("chart-top-servicos"), topServicos, fmtBRL);
+
+    // Top consultores por comissão
+    var consultorMap = {};
+    vendas.forEach(function(v){ if (v.CONSULTOR && v.CONSULTOR!=="Não informado") consultorMap[v.CONSULTOR] = (consultorMap[v.CONSULTOR]||0) + v.COMISSAO; });
+    var topConsultores = Object.keys(consultorMap).map(function(k){return {label:k, value:consultorMap[k]};})
+      .filter(function(x){return x.value>0;}).sort(function(a,b){return b.value-a.value;}).slice(0,6);
+    renderHbars(document.getElementById("chart-top-consultores"), topConsultores, fmtBRL);
+
+    // ── Certificado digital ──
+    var certVendas = certificados.length;
+    var certReceita = certificados.reduce(function(s,c){return s+c.VALOR;},0);
+    var tipos = {};
+    certificados.forEach(function(c){ tipos[c.TIPO_CERTIFICADO] = (tipos[c.TIPO_CERTIFICADO]||0)+1; });
+    var tiposCount = Object.keys(tipos).filter(function(t){return t!=="Não informado";}).length;
+    var now = new Date();
+    var diasDecorridos = Math.max(1, now.getDate());
+    var diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    var projecao = (certReceita/diasDecorridos) * diasNoMes;
+
+    document.getElementById("kpi-certificado").innerHTML = [
+      kpiCard("Vendas de certificado", fmtInt(certVendas), "registros no período", "purple"),
+      kpiCard("Receita certificado digital", fmtBRL(certReceita), "soma dos valores", "cyan"),
+      kpiCard("Tipos de certificado", fmtInt(tiposCount), Object.keys(tipos).join(" · "), "amber"),
+      kpiCard("Projeção de fechamento do mês", fmtBRL(projecao), "com " + diasDecorridos + " de " + diasNoMes + " dias decorridos, ao ritmo atual", ""),
+    ].join("");
+
+    var certPorMes = MESES.map(function(m){
+      var soma = certificados.filter(function(c){return c.MES===m;}).reduce(function(s,c){return s+c.VALOR;},0);
+      return { mes:m, valor:soma };
+    }).filter(function(x){return x.valor>0;});
+    renderBars(document.getElementById("chart-cert-mensal"), certPorMes.map(function(x){
+      return { label: MESES_ABREV[x.mes], value: x.valor, valueLabel: fmtBRL(x.valor), cls:"purple" };
+    }));
+
+    var tipoData = Object.keys(tipos).filter(function(t){return t!=="Não informado";}).map(function(t,i){
+      return { label: t, value: tipos[t], color: DONUT_PALETTE[i % DONUT_PALETTE.length] };
+    });
+    renderDonut(document.getElementById("chart-cert-tipo"), tipoData, fmtInt(certVendas)+" vendas");
+
+    // ── Clientes ──
+    var clientesNovos = clientes.length;
+    var honorarioTotal = clientes.reduce(function(s,c){return s+c.HONORARIO;},0);
+    var ticketClientes = clientesNovos>0 ? honorarioTotal/clientesNovos : 0;
+    var regimes = {};
+    clientes.forEach(function(c){ if (c.REGIME) regimes[c.REGIME]=1; });
+    var saidasCount = saidas.length;
+
+    document.getElementById("kpi-clientes").innerHTML = [
+      kpiCard("Clientes novos", fmtInt(clientesNovos), "no período selecionado", ""),
+      kpiCard("Honorário total", fmtBRL(honorarioTotal), "soma dos clientes novos", "blue"),
+      kpiCard("Ticket médio", fmtBRL(ticketClientes), "honorário ÷ clientes novos", "cyan"),
+      kpiCard("Regimes distintos", fmtInt(Object.keys(regimes).length), "regimes tributários no período", ""),
+      kpiCard("Saídas / churn", fmtInt(saidasCount), "baixas no período", "coral"),
+      kpiCard("Balanço", (clientesNovos-saidasCount>=0?"+":"") + fmtInt(clientesNovos-saidasCount), "entradas − saídas", clientesNovos-saidasCount>=0?"":"coral"),
+    ].join("");
+
+    var clientesPorMes = MESES.map(function(m){
+      return { mes:m, valor: clientes.filter(function(c){return c.MES===m;}).length };
+    }).filter(function(x){return x.valor>0;});
+    renderBars(document.getElementById("chart-clientes-mensal"), clientesPorMes.map(function(x){
+      return { label: MESES_ABREV[x.mes], value: x.valor, valueLabel: fmtInt(x.valor), cls:"blue" };
+    }));
+
+    var entradasSaidasData = [];
+    MESES.forEach(function(m){
+      var entradas = clientes.filter(function(c){return c.MES===m;}).length;
+      var saidasMes = saidas.filter(function(s){return s.MES===m;}).length;
+      if (entradas>0 || saidasMes>0){
+        entradasSaidasData.push({ label: MESES_ABREV[m]+" (E)", value: entradas, valueLabel: fmtInt(entradas), cls:"" });
+        entradasSaidasData.push({ label: MESES_ABREV[m]+" (S)", value: saidasMes, valueLabel: fmtInt(saidasMes), cls:"coral" });
+      }
+    });
+    renderBars(document.getElementById("chart-entradas-saidas"), entradasSaidasData);
+
+    // ── Segmentos: BPO Financeiro x Assessoria Contábil ──
+    function segmentSummary(seg){
+      var list = clientes.filter(function(c){return classifySegment(c.SEGMENTO_SERVICO)===seg;});
+      var hon = list.reduce(function(s,c){return s+c.HONORARIO;},0);
+      var comHon = list.filter(function(c){return c.HONORARIO>0;}).length;
+      return { clientes: list.length, honorario: hon, ticket: comHon>0 ? hon/comHon : 0 };
+    }
+    var bpo = segmentSummary("BPO Financeiro");
+    var assessoria = segmentSummary("Assessoria Contábil");
+    document.getElementById("segment-bpo").innerHTML =
+      '<h3>BPO Financeiro</h3><div class="big">' + fmtBRL(bpo.honorario) + '</div>' +
+      '<div class="row"><span>' + fmtInt(bpo.clientes) + ' clientes</span><span>ticket médio ' + fmtBRL(bpo.ticket) + '</span></div>';
+    document.getElementById("segment-assessoria").innerHTML =
+      '<h3>Assessoria Contábil</h3><div class="big">' + fmtBRL(assessoria.honorario) + '</div>' +
+      '<div class="row"><span>' + fmtInt(assessoria.clientes) + ' clientes</span><span>ticket médio ' + fmtBRL(assessoria.ticket) + '</span></div>';
+  }
+
+  function populateFilters(){
+    var anos = {}, meses = {};
+    STATE.vendas.concat(STATE.clientes).forEach(function(r){ if (r.ANO) anos[r.ANO]=1; if (r.MES) meses[r.MES]=1; });
+    var anoSelect = document.getElementById("filter-ano");
+    Object.keys(anos).sort().forEach(function(a){
+      var opt = document.createElement("option"); opt.value=a; opt.textContent=a; anoSelect.appendChild(opt);
+    });
+    var mesSelect = document.getElementById("filter-mes");
+    MESES.filter(function(m){return meses[m];}).forEach(function(m){
+      var opt = document.createElement("option"); opt.value=m; opt.textContent=m; mesSelect.appendChild(opt);
+    });
+  }
+
+  function setBanner(kind, msg){
+    var el = document.getElementById("status-banner");
+    if (!msg){ el.className=""; el.textContent=""; return; }
+    el.className = "show " + (kind==="loading" ? "loading" : "");
+    el.textContent = msg;
+  }
+
+  function setUpdated(){
+    var now = new Date();
+    var label = now.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    document.getElementById("updated-label").textContent = "Atualizado em " + label;
+    document.getElementById("footer-updated").textContent = "Última leitura das planilhas: " + label;
+    document.getElementById("year-now").textContent = now.getFullYear();
+  }
+
+  // ─── Carregamento inicial ──────────────────────────────────────────────────────
+  function loadAll(){
+    setBanner("loading", "Carregando dados ao vivo das planilhas do Google Sheets…");
+
+    var vendasPromises = MESES.map(function(m){
+      return fetchGviz(VENDAS_ID, m).then(function(table){ return parseVendasTable(table, m); });
+    });
+    var clientesPromise = fetchGviz(CLIENTES_ID, SHEET_CLIENTES).then(parseClientesTable);
+    var saidasPromise = fetchGviz(CLIENTES_ID, SHEET_SAIDAS).then(parseSaidasTable);
+    var certPromise = fetchGviz(CERTIFICADOS_ID, SHEET_CERTIFICADOS).then(parseCertificadosTable);
+
+    Promise.all(vendasPromises.concat([clientesPromise, saidasPromise, certPromise])).then(function(results){
+      var vendasResults = results.slice(0, MESES.length);
+      STATE.vendas = Array.prototype.concat.apply([], vendasResults);
+      STATE.clientes = results[MESES.length] || [];
+      STATE.saidas = results[MESES.length+1] || [];
+      STATE.certificados = results[MESES.length+2] || [];
+      STATE.loaded = true;
+
+      var gotAnything = STATE.vendas.length || STATE.clientes.length || STATE.certificados.length;
+      if (!gotAnything){
+        setBanner("error", "Não foi possível carregar as planilhas agora (elas podem estar temporariamente indisponíveis). Tente atualizar a página em alguns minutos.");
+      } else {
+        setBanner();
+      }
+      populateFilters();
+      computeAndRender();
+      setUpdated();
+    });
+  }
+
+  document.getElementById("filter-ano").addEventListener("change", computeAndRender);
+  document.getElementById("filter-mes").addEventListener("change", computeAndRender);
+  document.getElementById("filter-clear").addEventListener("click", function(){
+    document.getElementById("filter-ano").value = "";
+    document.getElementById("filter-mes").value = "";
+    computeAndRender();
+  });
+
+  loadAll();
+})();
+</script>
 </body>
 </html>
