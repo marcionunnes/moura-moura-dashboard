@@ -624,6 +624,7 @@
     var idxMes = colIndex(cols, ["mes","mês"]);
     var idxAno = colIndex(cols, ["ano"]);
     var idxValor = colIndex(cols, ["valor","receita"]);
+    var idxComissao = colIndex(cols, ["comissão","comissao"]);
     var out = [];
     for (var r=0;r<rows.length;r++){
       var row = rows[r];
@@ -636,6 +637,7 @@
       out.push({
         TIPO_CERTIFICADO: tipo || "Não informado",
         VALOR: valor,
+        COMISSAO: idxComissao>=0 ? cellNumber(c[idxComissao]) : 0,
         MES: idxMes>=0 ? (cellText(c[idxMes]) || "") : "",
         ANO: idxAno>=0 ? cellText(c[idxAno]) : String(new Date().getFullYear()),
       });
@@ -786,12 +788,14 @@
     var diasDecorridos = Math.max(1, now.getDate());
     var diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
     var projecao = (certReceita/diasDecorridos) * diasNoMes;
+    var certComissaoTotal = certificados.reduce(function(s,c){return s+c.COMISSAO;},0);
 
     document.getElementById("kpi-certificado").innerHTML = [
       kpiCard("Vendas de certificado", fmtInt(certVendas), "registros no período", "purple"),
       kpiCard("Receita certificado digital", fmtBRL(certReceita), "soma dos valores", "cyan"),
       kpiCard("Tipos de certificado", fmtInt(tiposCount), Object.keys(tipos).join(" · "), "amber"),
       kpiCard("Projeção de fechamento do mês", fmtBRL(projecao), "com " + diasDecorridos + " de " + diasNoMes + " dias decorridos, ao ritmo atual", ""),
+      kpiCard("Comissão certificado digital", fmtBRL(certComissaoTotal), "soma das comissões no período", "purple"),
     ].join("");
 
     var certPorMes = MESES.map(function(m){
