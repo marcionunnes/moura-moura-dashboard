@@ -791,15 +791,17 @@
     var anoAtualReal = String(now.getFullYear());
     var mesAtualReal = MESES[now.getMonth()];
     var isMesCorrente = mesSel === mesAtualReal && (anoSel === "" || anoSel === anoAtualReal);
-    var projecao, projecaoNota;
+    var projecao, projecaoNota, projecaoLabel;
     if (isMesCorrente){
       var diasDecorridos = Math.max(1, now.getDate());
       var diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
       projecao = (certReceita/diasDecorridos) * diasNoMes;
       projecaoNota = "com " + diasDecorridos + " de " + diasNoMes + " dias decorridos, ao ritmo atual";
+      projecaoLabel = "Projeção de fechamento do mês";
     } else {
       projecao = certReceita;
-      projecaoNota = mesSel ? "mês encerrado — valor já é o total real" : "selecione um único mês pra projetar o fechamento";
+      projecaoLabel = mesSel ? "Receita final do mês" : "Receita do período";
+      projecaoNota = mesSel ? "mês encerrado — não é mais estimativa" : "selecione um único mês pra ver a projeção de fechamento";
     }
     var certComissaoTotal = certificados.reduce(function(s,c){return s+c.COMISSAO;},0);
 
@@ -807,7 +809,7 @@
       kpiCard("Vendas de certificado", fmtInt(certVendas), "registros no período", "purple"),
       kpiCard("Receita certificado digital", fmtBRL(certReceita), "soma dos valores", "cyan"),
       kpiCard("Tipos de certificado", fmtInt(tiposCount), Object.keys(tipos).join(" · "), "amber"),
-      kpiCard("Projeção de fechamento do mês", fmtBRL(projecao), projecaoNota, ""),
+      kpiCard(projecaoLabel, fmtBRL(projecao), projecaoNota, ""),
       kpiCard("Comissão certificado digital", fmtBRL(certComissaoTotal), "soma das comissões no período", "purple"),
     ].join("");
 
