@@ -784,17 +784,30 @@
     var tipos = {};
     certificados.forEach(function(c){ tipos[c.TIPO_CERTIFICADO] = (tipos[c.TIPO_CERTIFICADO]||0)+1; });
     var tiposCount = Object.keys(tipos).filter(function(t){return t!=="Não informado";}).length;
+    // A projeção só faz sentido pro mês corrente (ainda em andamento) — usar os dias
+    // decorridos de HOJE pra extrapolar um mês já fechado (ex.: filtrar Setembro em
+    // outubro) multiplicava a receita real por ~30/31, gerando valor absurdo.
     var now = new Date();
-    var diasDecorridos = Math.max(1, now.getDate());
-    var diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    var projecao = (certReceita/diasDecorridos) * diasNoMes;
+    var anoAtualReal = String(now.getFullYear());
+    var mesAtualReal = MESES[now.getMonth()];
+    var isMesCorrente = mesSel === mesAtualReal && (anoSel === "" || anoSel === anoAtualReal);
+    var projecao, projecaoNota;
+    if (isMesCorrente){
+      var diasDecorridos = Math.max(1, now.getDate());
+      var diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      projecao = (certReceita/diasDecorridos) * diasNoMes;
+      projecaoNota = "com " + diasDecorridos + " de " + diasNoMes + " dias decorridos, ao ritmo atual";
+    } else {
+      projecao = certReceita;
+      projecaoNota = mesSel ? "mês encerrado — valor já é o total real" : "selecione um único mês pra projetar o fechamento";
+    }
     var certComissaoTotal = certificados.reduce(function(s,c){return s+c.COMISSAO;},0);
 
     document.getElementById("kpi-certificado").innerHTML = [
       kpiCard("Vendas de certificado", fmtInt(certVendas), "registros no período", "purple"),
       kpiCard("Receita certificado digital", fmtBRL(certReceita), "soma dos valores", "cyan"),
       kpiCard("Tipos de certificado", fmtInt(tiposCount), Object.keys(tipos).join(" · "), "amber"),
-      kpiCard("Projeção de fechamento do mês", fmtBRL(projecao), "com " + diasDecorridos + " de " + diasNoMes + " dias decorridos, ao ritmo atual", ""),
+      kpiCard("Projeção de fechamento do mês", fmtBRL(projecao), projecaoNota, ""),
       kpiCard("Comissão certificado digital", fmtBRL(certComissaoTotal), "soma das comissões no período", "purple"),
     ].join("");
 
@@ -865,7 +878,7 @@
 
   function populateFilters(){
     var anos = {}, meses = {};
-    STATE.vendas.concat(STATE.clientes).forEach(function(r){ if (r.ANO) anos[r.ANO]=1; if (r.MES) meses[r.MES]=1; });
+    STATE.vendas.concat(STATE.clientes, STATE.certificados).forEach(function(r){ if (r.ANO) anos[r.ANO]=1; if (r.MES) meses[r.MES]=1; });
     var anoSelect = document.getElementById("filter-ano");
     Object.keys(anos).sort().forEach(function(a){
       var opt = document.createElement("option"); opt.value=a; opt.textContent=a; anoSelect.appendChild(opt);
