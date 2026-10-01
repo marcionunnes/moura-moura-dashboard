@@ -156,11 +156,31 @@
   .goal-card{
     background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     padding:16px;box-shadow:var(--shadow);
+    opacity:0;animation:rise .6s var(--ease) forwards;
   }
-  .goal-card h3{font-size:13px;font-weight:600;margin-bottom:10px}
+  .goal-card h3{font-size:13px;font-weight:600;margin:0}
+  .goal-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  .goal-value-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .goal-value-row[hidden]{display:none}
+  .goal-value{font-family:var(--font-head);font-size:18px;font-weight:700}
   .goal-track{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
   .goal-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--cyan));width:0;transition:width .8s var(--ease)}
-  .goal-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px}
+  .goal-fill.over{background:linear-gradient(90deg,var(--amber),var(--mint))}
+  .goal-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:8px}
+  .goal-note{font-size:11px;color:var(--muted);margin-top:10px}
+  .goal-btn{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer;
+    transition:border-color .15s var(--ease),color .15s var(--ease);
+  }
+  .goal-btn:hover{border-color:var(--mint);color:var(--ink)}
+  .goal-btn.primary{background:var(--mint);border-color:var(--mint);color:#05205b;font-weight:700}
+  .goal-btn.primary:hover{color:#05205b;filter:brightness(1.08)}
+  .goal-input{
+    background:var(--navy-800);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:7px 10px;font-size:13px;width:140px;
+  }
+  .goal-input:focus-visible, .goal-btn:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 
   /* ---------- Charts ---------- */
   .charts{display:grid;grid-template-columns:1fr;gap:14px}
@@ -341,6 +361,29 @@
         <span class="section-tag">Ao vivo</span>
       </div>
       <div class="kpi-grid" id="kpi-certificado" style="margin-bottom:14px"></div>
+
+      <div class="goal-card" id="cert-goal-card" style="margin-bottom:14px">
+        <div class="goal-head">
+          <h3>Meta de receita — Certificado digital</h3>
+          <div class="goal-value-row" id="goal-view">
+            <span class="goal-value" id="goal-value-display"></span>
+            <button type="button" class="goal-btn" id="goal-edit-btn">Editar meta</button>
+          </div>
+          <div class="goal-value-row" id="goal-form" hidden>
+            <span style="font-size:12.5px;color:var(--muted)">R$</span>
+            <input type="number" class="goal-input" id="goal-input" min="0" step="0.01" inputmode="decimal">
+            <button type="button" class="goal-btn primary" id="goal-save-btn">Salvar</button>
+            <button type="button" class="goal-btn" id="goal-cancel-btn">Cancelar</button>
+          </div>
+        </div>
+        <div class="goal-track"><div class="goal-fill" id="goal-fill"></div></div>
+        <div class="goal-meta">
+          <span id="goal-progress-text"></span>
+          <span id="goal-remaining-text"></span>
+        </div>
+        <p class="goal-note">Meta editável salva neste navegador — não é compartilhada entre dispositivos.</p>
+      </div>
+
       <div class="charts">
         <div class="chart"><h3>Evolução mensal — Certificado digital</h3><div id="chart-cert-mensal"></div></div>
         <div class="chart"><h3>Vendas por tipo de certificado</h3><div id="chart-cert-tipo" class="donut-wrap"></div></div>
@@ -392,7 +435,13 @@
   // de cálculo na planilha; a receita de vendas usa o valor já lançado pela equipe.
   var SIMPLES_NACIONAL_ANEXO_III_FAIXA1 = 0.06;
 
-  var MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  // Meta de receita (certificado digital) — editável pelo usuário, salva no navegador
+  // (localStorage). Site é 100% estático, sem backend, então não há sincronização
+  // entre dispositivos: cada navegador guarda o próprio valor.
+  var CERT_GOAL_STORAGE_KEY = "mm_cert_goal_v1";
+  var CERT_GOAL_DEFAULT = 9000;
+
+  var MESES =["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   var MESES_ABREV = {Janeiro:"Jan",Fevereiro:"Fev",Março:"Mar",Abril:"Abr",Maio:"Mai",Junho:"Jun",Julho:"Jul",Agosto:"Ago",Setembro:"Set",Outubro:"Out",Novembro:"Nov",Dezembro:"Dez"};
 
   var fmtBRL = function(v){ return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); };
@@ -689,6 +738,70 @@
       '<div class="value">' + value + '</div><div class="note">' + escapeHtml(note||'') + '</div></article>';
   }
 
+  // ─── Meta de receita (certificado digital) ─────────────────────────────────────
+  function getCertGoal(){
+    try{
+      var raw = localStorage.getItem(CERT_GOAL_STORAGE_KEY);
+      var n = raw !== null ? Number(raw) : NaN;
+      return (isFinite(n) && n >= 0) ? n : CERT_GOAL_DEFAULT;
+    }catch(e){
+      return CERT_GOAL_DEFAULT;
+    }
+  }
+  function setCertGoal(value){
+    try{ localStorage.setItem(CERT_GOAL_STORAGE_KEY, String(value)); }catch(e){}
+  }
+
+  var certGoalEditing = false;
+
+  function renderGoalCard(realizado){
+    var meta = getCertGoal();
+    var percentual = meta > 0 ? (realizado/meta*100) : 0;
+    var progresso = Math.min(100, Math.max(0, percentual));
+    var restante = Math.max(0, meta - realizado);
+
+    document.getElementById("goal-value-display").textContent = fmtBRL(meta);
+    var fill = document.getElementById("goal-fill");
+    fill.style.width = progresso + "%";
+    fill.className = "goal-fill" + (percentual >= 100 ? " over" : "");
+    document.getElementById("goal-progress-text").textContent =
+      fmtBRL(realizado) + " de " + fmtBRL(meta) + " (" + percentual.toFixed(1) + "%)";
+    document.getElementById("goal-remaining-text").textContent =
+      percentual >= 100 ? "Meta atingida 🎉" : "faltam " + fmtBRL(restante);
+
+    document.getElementById("goal-view").hidden = certGoalEditing;
+    document.getElementById("goal-form").hidden = !certGoalEditing;
+    if (certGoalEditing) document.getElementById("goal-input").value = meta;
+  }
+
+  document.getElementById("goal-edit-btn").addEventListener("click", function(){
+    certGoalEditing = true;
+    document.getElementById("goal-input").value = getCertGoal();
+    document.getElementById("goal-view").hidden = true;
+    document.getElementById("goal-form").hidden = false;
+    document.getElementById("goal-input").focus();
+  });
+  document.getElementById("goal-cancel-btn").addEventListener("click", function(){
+    certGoalEditing = false;
+    computeAndRender();
+  });
+  document.getElementById("goal-save-btn").addEventListener("click", saveGoalFromInput);
+  document.getElementById("goal-input").addEventListener("keydown", function(ev){
+    if (ev.key === "Enter"){ ev.preventDefault(); saveGoalFromInput(); }
+    if (ev.key === "Escape"){ certGoalEditing = false; computeAndRender(); }
+  });
+  function saveGoalFromInput(){
+    var raw = document.getElementById("goal-input").value;
+    var n = Number(raw);
+    if (!isFinite(n) || n < 0){
+      document.getElementById("goal-input").focus();
+      return;
+    }
+    setCertGoal(n);
+    certGoalEditing = false;
+    computeAndRender();
+  }
+
   // ─── Estado global ─────────────────────────────────────────────────────────────
   var STATE = { vendas: [], clientes: [], saidas: [], certificados: [], loaded: false };
 
@@ -812,6 +925,8 @@
       kpiCard(projecaoLabel, fmtBRL(projecao), projecaoNota, ""),
       kpiCard("Comissão certificado digital", fmtBRL(certComissaoTotal), "soma das comissões no período", "purple"),
     ].join("");
+
+    renderGoalCard(certReceita);
 
     var certPorMes = MESES.map(function(m){
       var soma = certificados.filter(function(c){return c.MES===m;}).reduce(function(s,c){return s+c.VALOR;},0);
